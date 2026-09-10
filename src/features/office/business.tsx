@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { Input } from '@/components/ui/input'
 import {
   AlertCircle,
   ArrowRight,
@@ -951,4 +953,22 @@ export function Matter(props: BusinessProps) {
       </details>
     </div>
   )
+}
+
+export function MatterList({ snapshot, viewMatter }: Pick<BusinessProps, 'snapshot' | 'viewMatter'>) {
+  const [query, setQuery] = useState(() => sessionStorage.getItem('office-matter-query') || '')
+  const [filter, setFilter] = useState(() => sessionStorage.getItem('office-matter-filter') || 'all')
+  const category = snapshot.state.matter.status === 'closed' ? 'closed' : snapshot.state.matter.planSelection || snapshot.state.tasks.length ? 'processing' : 'warning'
+  const matches = (filter === 'all' || filter === category) && `${snapshot.state.matter.id} ${snapshot.state.matter.title} ${snapshot.state.matter.materialId}`.toLowerCase().includes(query.toLowerCase())
+  return <Section title='事项列表'><div className='mb-5 flex flex-wrap gap-3'>
+    <Input aria-label='搜索事项' className='max-w-sm' placeholder='搜索事项名称、编号或物料' value={query} onChange={e => { setQuery(e.target.value); sessionStorage.setItem('office-matter-query', e.target.value) }} />
+    <select aria-label='事项状态筛选' className='rounded-md border bg-background px-3 py-2 text-sm' value={filter} onChange={e => { setFilter(e.target.value); sessionStorage.setItem('office-matter-filter', e.target.value) }}>
+      <option value='all'>全部状态</option><option value='warning'>预警</option><option value='processing'>处理中</option><option value='closed'>已办结</option>
+    </select></div>
+    {matches ? <button className='flex w-full flex-wrap items-center justify-between gap-4 rounded-lg border p-5 text-left hover:bg-muted' onClick={viewMatter}>
+      <div><p className='font-semibold'>{snapshot.state.matter.title}</p><p className='mt-2 text-sm text-muted-foreground'>{snapshot.state.matter.id} · {snapshot.state.matter.materialId}</p></div>
+      <Badge variant='outline'>{category === 'closed' ? '已办结' : category === 'warning' ? '预警' : '处理中'}</Badge><ArrowRight className='size-4' />
+    </button> : <p className='py-10 text-center text-muted-foreground'>没有符合筛选条件的事项。</p>}
+    <p className='mt-4 text-sm text-muted-foreground'>当前演示包含 1 条供应商交期变更事项；办结记录在此保留。</p>
+  </Section>
 }

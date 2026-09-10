@@ -138,7 +138,7 @@ export function RunContent({
         </Button>
       )}
       <a
-        href={`${import.meta.env.BASE_URL}office#matter`}
+        href={`${import.meta.env.BASE_URL}office#matter-detail?id=SUP-001`}
         className='inline-flex text-sm underline underline-offset-4'
       >
         查看事项与回执

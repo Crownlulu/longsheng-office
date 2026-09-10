@@ -6,7 +6,6 @@ import {
   Loader2,
   MessageSquare,
   RefreshCw,
-  Settings2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,9 +32,8 @@ import { ThemeSwitch } from '@/components/theme-switch'
 import { ActionSheet } from './action-sheet'
 import { officeApi, errorText, getOfficeSnapshot, OfficeError } from './api'
 import { Assistant } from './assistant'
-import { Home, Matter } from './business'
+import { Home, Matter, MatterList } from './business'
 import './office.css'
-import { Settings } from './settings'
 import { ErrorNotice } from './shared'
 import {
   roleNames,
@@ -70,21 +68,20 @@ const pages = [
     icon: ListTodo,
     description: '供应商交期变更 · 来源、方案与处理记录。',
   },
-  {
-    id: 'settings',
-    label: '演示设置',
-    icon: Settings2,
-    description: '调整样例数据、检查模型连接与失败恢复。',
-  },
+
 ] as const
 function readPage(): Page {
-  const value = window.location.hash.slice(1)
+  const value = window.location.hash.slice(1).split('?')[0]
+  if (value === 'matter-detail') return 'matter-detail'
   return pages.some((page) => page.id === value) ? (value as Page) : 'home'
 }
 
 export function OfficeApp() {
   const [page, setPage] = useState<Page>(readPage)
-  const [role, setRole] = useState<Role>('lead')
+  const [role, setRole] = useState<Role>(() => {
+    const saved = sessionStorage.getItem('office-role')
+    return saved && saved in roleNames ? saved as Role : 'lead'
+  })
   const roleRef = useRef(role)
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
   const [config, setConfig] = useState<ModelConfig | null>(null)
@@ -228,7 +225,7 @@ export function OfficeApp() {
     return () => window.removeEventListener('hashchange', changed)
   }, [])
   function navigate(next: Page) {
-    window.location.assign('#' + next)
+    window.location.assign('#' + next + (next === 'matter-detail' && snapshot ? '?id=' + encodeURIComponent(snapshot.state.matter.id) : ''))
     setPage(next)
   }
   function ask(value: string) {
@@ -368,7 +365,7 @@ export function OfficeApp() {
     setReceiptTask(null)
     void propose(action, receiptVersion.current)
   }
-  const currentPage = pages.find((item) => item.id === page)!
+  const currentPage = pages.find((item) => item.id === (page === 'matter-detail' ? 'matter' : page))!
   const businessProps = {
     role,
     busy: actionBusy || loading,
@@ -377,7 +374,7 @@ export function OfficeApp() {
     openSource,
     giveReceipt,
     ask,
-    viewMatter: () => navigate('matter'),
+    viewMatter: () => navigate('matter-detail'),
   }
 
   if (accessRequired) {
@@ -471,6 +468,7 @@ export function OfficeApp() {
               setReceiptTask(null)
               receiptDraft.current = null
               setNotice('')
+              sessionStorage.setItem('office-role', value)
               setRole(value as Role)
             }}
             disabled={actionBusy || loading}
@@ -539,8 +537,12 @@ export function OfficeApp() {
         {snapshot && (
           <div className={loading ? 'pointer-events-none opacity-60' : ''}>
             {page === 'home' && <Home snapshot={snapshot} {...businessProps} />}
-            {page === 'matter' && (
-              <Matter snapshot={snapshot} {...businessProps} />
+            {page === 'matter' && <MatterList snapshot={snapshot} viewMatter={businessProps.viewMatter} />}
+            {page === 'matter-detail' && (
+              <div className='space-y-4'>
+                <Button variant='ghost' onClick={() => navigate('matter')}>返回事项列表</Button>
+                <Matter snapshot={snapshot} {...businessProps} />
+              </div>
             )}
             {page === 'assistant' && (
               <Assistant
@@ -557,25 +559,12 @@ export function OfficeApp() {
                 propose={(action, expectedVersion) =>
                   void propose(action, expectedVersion)
                 }
-                openSettings={() => navigate('settings')}
                 giveReceipt={giveReceipt}
-                viewMatter={() => navigate('matter')}
+                viewMatter={() => navigate('matter-detail')}
                 actionBusy={actionBusy || loading}
               />
             )}
-            {page === 'settings' && (
-              <Settings
-                key={`${role}:${config?.model}:${config?.mode}:${snapshot.state.suppliers.find((s) => s.id === 'A')?.arrivalDay}`}
-                snapshot={snapshot}
-                role={role}
-                config={config}
-                history={history}
-                openSource={openSource}
-                busy={actionBusy}
-                propose={(action) => void propose(action)}
-                refresh={refresh}
-              />
-            )}
+
           </div>
         )}
       </Main>
@@ -615,7 +604,7 @@ export function OfficeApp() {
         recheck={() => {
           if (preview) void propose(preview.action)
         }}
-        viewMatter={() => navigate('matter')}
+        viewMatter={() => navigate('matter-detail')}
       />
       <Sheet
         open={!!receiptTask}

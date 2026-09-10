@@ -1,7 +1,7 @@
 import type { OfficeGraphData } from './graph'
 
 export type Role = 'procurement' | 'quality' | 'sales' | 'lead'
-export type Page = 'home' | 'assistant' | 'matter' | 'settings'
+export type Page = 'home' | 'assistant' | 'matter' | 'matter-detail'
 export type Action = { type: string; [key: string]: unknown }
 export type Source = {
   id: string

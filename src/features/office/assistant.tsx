@@ -37,7 +37,6 @@ type Props = {
   refresh: () => Promise<void>
   openSource: (source: Source) => void
   propose: (action: Action, expectedVersion?: number) => void
-  openSettings: () => void
   giveReceipt: (task: Task) => void
   viewMatter: () => void
   actionBusy: boolean
@@ -53,7 +52,6 @@ export function Assistant({
   refresh,
   openSource,
   propose,
-  openSettings,
   giveReceipt,
   viewMatter,
   actionBusy,
@@ -268,9 +266,7 @@ export function Assistant({
                 <RotateCcw className='size-4' />
                 重试原问题
               </Button>
-              <Button variant='link' onClick={openSettings}>
-                检查运行设置
-              </Button>
+
             </div>
           )}
           {!run && !busy && !error && (
