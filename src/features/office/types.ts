@@ -21,6 +21,8 @@ export type Task = {
     attempts: number
     error?: string
   }
+  acceptedAt?: string
+  startedAt?: string
   receipt?: unknown
   qualityResult?: string
 }
@@ -138,6 +140,7 @@ export type ModelConfig = {
   maxRounds: number
 }
 export type Run = {
+  facts?: Pick<Snapshot, 'state' | 'analysis'>
   id: string
   question: string
   mode: 'live' | 'rules'
@@ -174,6 +177,8 @@ export type Comparison = {
 }
 export type History = { runs: Run[]; comparisons: Comparison[] }
 export type AssistantSession = {
+  messageIds?: string[]
+  showPlans?: boolean
   question: string
   planReason: string
   run: Run | null
@@ -201,7 +206,8 @@ export const statusNames: Record<string, string> = {
   superseded: '已被替代',
   pending_confirmation: '待确认',
   pending_delivery: '待发送',
-  delivered: '已送达',
+  delivered: '已送达，待接收',
+  accepted: '已接收',
   in_progress: '处理中',
   awaiting_review: '待复核',
   completed: '已完成',

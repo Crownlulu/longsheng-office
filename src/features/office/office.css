@@ -34,3 +34,12 @@
 .office-app details {
   background: var(--card);
 }
+
+/* September 10: conversation workspace, reuse existing brand tokens. */
+.office-chat { display: grid; grid-template-columns: 240px minmax(0, 1fr); height: calc(100dvh - 190px); min-height: 560px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--card); }
+.office-chat-history { overflow: auto; padding: 16px; border-right: 1px solid var(--border); background: var(--muted); }
+.office-chat-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.office-chat-messages { flex: 1; min-height: 0; overflow: auto; padding: 24px; overflow-wrap: anywhere; }
+.office-chat-composer { flex-shrink: 0; padding: 16px 24px; border-top: 1px solid var(--border); background: var(--card); }
+@media (max-width: 900px) { .office-chat { grid-template-columns: 190px minmax(0, 1fr); } .office-chat-messages { padding: 16px; } }
+@media (max-width: 640px) { .office-chat { display: flex; flex-direction: column; height: calc(100dvh - 170px); min-height: 600px; } .office-chat-history { max-height: 130px; flex-shrink: 0; border-right: 0; border-bottom: 1px solid var(--border); } .office-chat-main { flex: 1; } .office-chat-composer { padding: 12px; } }
