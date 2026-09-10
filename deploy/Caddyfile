@@ -1,0 +1,5 @@
+{$BACKEND_DOMAIN} {
+    reverse_proxy backend:5214 {
+        header_up X-Real-IP {remote_host}
+    }
+}

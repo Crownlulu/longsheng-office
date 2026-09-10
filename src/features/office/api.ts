@@ -26,7 +26,9 @@ export async function officeApi<T>(
     data = await response.json()
   } catch {
     throw new OfficeError(
-      '暂时无法读取服务响应，请重试。',
+      response.status === 404
+        ? '业务接口未找到，请联系演示维护人员检查后台部署。'
+        : `后台返回了无法读取的响应（HTTP ${response.status}），请联系演示维护人员。`,
       'INVALID_RESPONSE',
       response.status
     )

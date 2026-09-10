@@ -1,0 +1,34 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
+    restart: unless-stopped
+    environment:
+      OFFICE_PUBLIC_ORIGIN: https://${BACKEND_DOMAIN:?Set BACKEND_DOMAIN}
+      OFFICE_ACCESS_CODE: ${OFFICE_ACCESS_CODE:?Set OFFICE_ACCESS_CODE}
+      OFFICE_MODEL_MODE: rules
+    volumes:
+      - office_data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5214/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  https:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      BACKEND_DOMAIN: ${BACKEND_DOMAIN:?Set BACKEND_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+volumes:
+  office_data:
+  caddy_data:
+  caddy_config:
