@@ -45,3 +45,9 @@
 | 后续验收提交 | 新增 3 项专项回归；补齐确认按钮名称、接收时间元数据、核验名称、办结返回首页、历史方案快照、格式化；Windows 启动器与交付说明 | 详见 DELIVERY.md；浏览器限制和远程权限阻塞如实保留 |
 
 本轮约定变化同步到服务端规则文案、模型动作定义、前端确认弹窗和对应测试，避免只改页面而导致模型继续要求必填理由或自动发送任务。旧会议原文不改写。新接口仍经既有 preview/confirm，未引入另一套执行通道。
+
+## 用户 fork 后的环境配置提交
+
+目标仓库更新为 `Crownlulu/longsheng-office`，本地保留原 origin 并添加 crown remote。读取 fork 成功；推送新分支仍因当前环境缺少 GitHub HTTPS 凭据失败，没有修改 fork 的 main。
+
+新增 Windows 一键启动器及逐步图文操作说明（文字版）：Node 24 检查 → npm ci → 构建 → 启动独立 SQLite 规则演示 → 服务就绪后打开浏览器。Node engines、.nvmrc 和 Docker 基础镜像统一 24。启动器端到端 HTTP 自检通过；46 项后端测试通过。Windows .cmd 与浏览器弹出尚待用户电脑实测。

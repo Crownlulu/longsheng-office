@@ -18,7 +18,9 @@ npm run build
 OFFICE_MODEL_MODE=rules npm run office
 ```
 
-Windows 用户也可双击项目中的 `start-demo.cmd`。它明确使用规则演示，并将演示数据保存在独立数据库 `.office-data/revision-demo.sqlite`。
+Windows 用户推荐双击 `start-demo.cmd`：自动检查 Node.js 24、安装依赖、构建并启动服务，然后打开浏览器。它明确使用规则演示，并将数据保存在独立数据库 `.office-data/local-demo/office.sqlite`。Git Bash / macOS / Linux 也可运行 `npm run demo:local`。首次运行需要联网下载依赖。
+
+手把手操作见 [Windows 启动指南](docs/revision-20260910/WINDOWS-QUICKSTART.md)。
 
 打开 http://127.0.0.1:5194/office 。该地址指运行代码的电脑，不是公开分享地址。
 
