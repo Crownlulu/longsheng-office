@@ -15,7 +15,7 @@ function qualityDone(result = 'approved') {
   state = act(state, 'start_task', 'quality', { taskId: 'T-QA' })
   return act(state, 'submit_quality', 'quality', { taskId: 'T-QA', result, evidence: '质量凭据原文' })
 }
-function switched() { return act(qualityDone(), 'approve_switch') }
+function switched() { return act(act(qualityDone(), 'approve_switch'), 'send_tasks') }
 function receipt(state, taskId, role) {
   state = act(state, 'start_task', role, { taskId })
   return act(state, 'submit_receipt', role, { taskId, evidence: `${taskId} 回执原文` })

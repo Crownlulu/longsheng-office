@@ -28,7 +28,8 @@ function approve(state = createState()) {
   state = applyAction(state, { type: 'request_quality' }, 'procurement')
   state = applyAction(state, { type: 'start_task', taskId: 'T-QA' }, 'quality')
   state = applyAction(state, { type: 'submit_quality', taskId: 'T-QA', result: 'approved', evidence: '资格证书及抽检均通过' }, 'quality')
-  return applyAction(state, { type: 'approve_switch' }, 'lead')
+  state = applyAction(state, { type: 'approve_switch' }, 'lead')
+  return applyAction(state, { type: 'send_tasks' }, 'lead')
 }
 
 test('initial projection retains type identities, original sources and conditional meeting effect', () => {

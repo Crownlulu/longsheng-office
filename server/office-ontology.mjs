@@ -7,7 +7,7 @@ const STATUS = {
   open: '处理中', closed: '已关闭', approved: '通过', pending: '待核验', rejected: '不通过',
   effective: '当前有效', conditional: '附条件候选方案｜未生效', fulfilled: '条件已落实', superseded: '已被替代',
   pending_delivery: '待送达', delivered: '已送达', delivery_failed: '送达失败',
-  in_progress: '处理中', awaiting_review: '待复核', completed: '已完成', historical: '历史回执',
+  accepted: '已接收', in_progress: '处理中', awaiting_review: '待复核', completed: '已完成', historical: '历史回执',
 }
 const TYPE_DEFINITIONS = [
   ['Matter', '办公事项', { id: '事项编号', title: '事项名称', status: '状态代码', statusLabel: '当前状态', supplierId: '当前供应商', materialId: '物料编号', linkedCount: '关联订单数', riskCount: '风险订单数', nextStep: '下一步', closedAt: '关闭时间', planSelection: '方案选择记录', followupApproval: '保留 A 跟进确认', review: '最终复核记录' }],
@@ -16,7 +16,7 @@ const TYPE_DEFINITIONS = [
   ['Order', '关联订单', { id: '订单编号', materialId: '物料编号', requiredDay: '最晚到料日（D）', arrivalDay: '当前方案到料日（D）', lateDays: '延误天数', atRisk: '存在到料风险' }],
   ['Decision', '会议与批准决定', { id: '决定编号', text: '决定内容', status: '状态代码', statusLabel: '当前效力', supplierId: '对应供应商', sequence: '先后顺序', sourceId: '原始来源编号', basedOn: '批准依据', approvedBy: '确认人角色', createdAt: '确认时间' }],
   ['Role', '演示角色', { id: '角色代码', name: '角色名称', identity: '身份说明' }],
-  ['Task', '协同任务', { id: '任务编号', title: '任务名称', assignee: '责任角色', assigneeLabel: '责任人', status: '状态代码', statusLabel: '当前状态', attempts: '本轮送达次数', deliveryError: '送达失败原因', qualityResult: '核验结论代码', qualityResultLabel: '核验结论', createdAt: '创建时间', deliveredAt: '送达时间', startedAt: '开始时间', completedAt: '完成时间', reopenedAt: '重新发起时间', reviewedBy: '复核人角色', historyCount: '历史核验轮数', workStatus: '工作状态', delivery: '消息送达状态' }],
+  ['Task', '协同任务', { id: '任务编号', title: '任务名称', assignee: '责任角色', assigneeLabel: '责任人', status: '状态代码', statusLabel: '当前状态', attempts: '本轮送达次数', deliveryError: '送达失败原因', qualityResult: '核验结论代码', qualityResultLabel: '核验结论', createdAt: '创建时间', deliveredAt: '送达时间', acceptedAt: '接收时间', startedAt: '开始时间', completedAt: '完成时间', reopenedAt: '重新发起时间', reviewedBy: '复核人角色', historyCount: '历史核验轮数', workStatus: '工作状态', delivery: '消息送达状态' }],
   ['Receipt', '处理回执', { id: '回执编号', taskId: '所属任务', evidence: '处理凭据', actor: '提交人角色', actorLabel: '提交人', at: '提交时间', status: '状态代码', statusLabel: '当前状态', qualityResult: '核验结论代码', qualityResultLabel: '核验结论', historical: '历史回执', round: '核验轮次', sourceId: '凭据来源编号' }],
   ['Document', '来源文档', { id: '来源编号', title: '标题', text: '来源原文', source: '来源说明' }],
 ]

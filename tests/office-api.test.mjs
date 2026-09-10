@@ -66,6 +66,7 @@ test('HTTP full chain, confirmation, retries, role/version guards, isolation and
     const quality = await act({ type: 'submit_quality', taskId: 'T-QA', result: 'approved', evidence: '合成核验：资质补齐并通过。' }, 'quality')
     assert.equal(quality.state.tasks[0].history[0].qualityResult, 'rejected')
     await act({ type: 'approve_switch' }, 'lead')
+    await act({ type: 'send_tasks' }, 'lead')
     assert.equal((await preview({ type: 'close_matter' }, 'lead')).allowed, false)
     await act({ type: 'start_task', taskId: 'T-PUR' }, 'procurement')
     await act({ type: 'submit_receipt', taskId: 'T-PUR', evidence: '合成回执：已确认 D4 采购安排。' })

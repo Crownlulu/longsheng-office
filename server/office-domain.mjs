@@ -45,9 +45,9 @@ export function analyze(state) {
   else if (closing.executionApproved) {
     nextStep = closing.canClose
       ? '采购、销售回执已齐，请业务负责人复核并关闭办公事项。'
-      : '请采购、销售处理各自任务并提交回执；发送失败的任务需先重试。'
+      : state.tasks.some(task => ['T-PUR', 'T-SALES'].includes(task.id) && task.status === 'pending_delivery') ? '方案已批准，请业务负责人确认并发送采购、销售任务。' : '请采购、销售接收并处理各自任务后提交回执；发送失败的任务需先重试。'
   } else if (state.matter.planSelection?.supplierId === 'A') nextStep = '已选择保留供应商 A，尚未批准跟进；请业务负责人复核到料风险并确认采购、销售跟进。'
-  else if (!state.matter.planSelection && !qa) nextStep = '请采购或业务负责人比较 A、B 方案，填写理由并选择后继续办理。'
+  else if (!state.matter.planSelection && !qa) nextStep = '请采购或业务负责人比较 A、B 方案，选择后继续办理，补充理由可选。'
   else if (!qa) nextStep = '已选择供应商 B；请采购或业务负责人确认发起质量核验任务。'
   else if (supplierB.quality === 'rejected') nextStep = '供应商 B 质量核验未通过，不能切换；补齐依据后由采购或负责人重新发起核验。'
   else if (qa.status === 'delivery_failed') nextStep = '质量任务发送失败，请重试送达。'
@@ -102,7 +102,7 @@ export function getDocuments(state) {
     ['DOC-MEETING-01', '第一次会议记录样例 · DEC-01', '原始会议事实（较早）：批准供应商 A 供应 M-01，形成 DEC-01。新切换决定获批准前，DEC-01 持续有效。历史原文保留，不随当前状态改写。'],
     ['DOC-MEETING-02', '第二次会议记录样例 · DEC-02', '原始会议事实（较新）：建议将供应商 B 作为备选，B 可在 D4 到料。条件为 B 通过质量资格核验，并由业务负责人明确批准。形成有条件方案 DEC-02，未批准直接切换；较新的会议不能自动替代有效决定 DEC-01。'],
     ['DOC-ROLES', '组织与任务职责样例', '采购经办（procurement）：选择方案、发起质量核验、采购跟进并提交回执；质量负责人（quality）：核验 B 并提供凭据；销售经办（sales）：同步交期并提交回执；业务负责人（lead）：选择方案、批准切换或确认保留 A 的跟进、复核关闭。全部岗位为演示角色，收件箱为页面内模拟。'],
-    ['DOC-RULES', '方案选择、跟进与关闭规则样例', '采购或负责人填写理由选择 A 或 B；选择不改变当前有效供应商，也不等于批准。B 质量核验通过且 T-QA 完成后，业务负责人才能人工确认切换，产生 DEC-03，替代 DEC-01 并创建 T-PUR、T-SALES。选择 A 后由负责人确认现存到料风险及跟进，DEC-01 保持有效，DEC-02 仍为条件建议，不伪造 B 核验通过，同样创建采购、销售跟进任务。执行任务创建后不可改选；B 核验正在办理或送达失败时不可改选 A，核验完成后可以改选并保留核验记录。助手只能预览，不能自动批准。两项任务须分别提交非空证据；业务负责人复核后关闭办公协同事项，不代表风险消除、到货、生产完成或订单交付。质量拒绝后可重新发起 T-QA 核验，同一任务保留历史。发送失败可重试，每轮核验或任务最多三次送达尝试。'],
+    ['DOC-RULES', '方案选择、跟进与关闭规则样例', '采购或负责人选择 A 或 B，系统带出事实依据，补充理由可选；选择不改变当前有效供应商，也不等于批准。B 质量核验通过且 T-QA 完成后，业务负责人才能人工确认切换，产生 DEC-03，替代 DEC-01 并创建 T-PUR、T-SALES。选择 A 后由负责人确认现存到料风险及跟进，DEC-01 保持有效，DEC-02 仍为条件建议，不伪造 B 核验通过，同样创建采购、销售跟进任务。任务先待发送，负责人另行确认发送，两方确认接收后开始处理。执行任务创建后不可改选；B 核验正在办理或送达失败时不可改选 A，核验完成后可以改选并保留核验记录。助手只能预览，不能自动批准。两项任务须分别提交非空证据；业务负责人复核后关闭办公协同事项，不代表风险消除、到货、生产完成或订单交付。质量拒绝后可重新发起 T-QA 核验，同一任务保留历史。发送失败可重试，每轮核验或任务最多三次送达尝试。'],
     ['DOC-STATE', '事项当前状态与回执', `当前数据版本 ${state.revision}；事项 ${state.matter.id} 状态 ${state.matter.status}，当前生效供应商 ${state.matter.supplierId}。选择意向：${state.matter.planSelection ? `${state.matter.planSelection.supplierId}（${state.matter.planSelection.reason}）` : '尚未记录'}。跟进批准：${analysis.executionApproved ? `已批准 ${analysis.executionSupplierId}` : '尚未批准'}。决定：${state.decisions.map(decision => `${decision.id}=${decision.status}（${decision.text}）`).join('；')}。任务：${state.tasks.length ? state.tasks.map(task => `${task.id} 收件人 ${LABELS[task.assignee]}，状态 ${task.status}，送达尝试 ${task.attempts}，核验结论 ${task.qualityResult ?? '无'}，回执 ${typeof task.receipt === 'string' ? task.receipt : task.receipt?.evidence ?? '无'}`).join('；') : '尚未创建'}。下一步：${analysis.nextStep}`],
     ['DEMO-STATE', '当前事项及业务记录（合成样例）', JSON.stringify({ revision: state.revision, matter: state.matter, suppliers: state.suppliers, orders: state.orders, decisions: state.decisions, tasks: state.tasks, events: state.events, failNextDelivery: state.failNextDelivery })],
   ]
@@ -123,6 +123,12 @@ export function getDocuments(state) {
   return rows.map(([id, title, text]) => ({ id, title, text: `[${id}] ${text}`, source: SOURCE }))
 }
 
+function selectionReason(state, action) {
+  if (typeof action.evidence === 'string' && action.evidence.trim()) return action.evidence.trim()
+  const option = analyze(state).options.find(item => item.supplierId === action.supplierId)
+  return option ? `选择 ${option.name}：预计 D${option.arrivalDay} 到料，${option.riskCount} 条到料风险；${action.supplierId === 'B' ? '须完成方案质量核验和负责人批准' : '沿用有效决定，保留到料风险并跟进'}。` : ''
+}
+
 function check(state, action, role) {
   if (!ROLES.includes(role)) fail('未知演示角色。', 'FORBIDDEN', 403)
   if (!action || typeof action !== 'object' || Array.isArray(action)) fail('请提供有效操作。')
@@ -136,28 +142,38 @@ function check(state, action, role) {
     case 'select_plan':
       roleIs('procurement', 'lead')
       if (!['A', 'B'].includes(action.supplierId)) fail('请选择供应商 A 或 B。', 'PLAN_INVALID')
-      hasEvidence()
+      if (action.evidence !== undefined && (typeof action.evidence !== 'string' || action.evidence.length > 4000)) fail('补充理由须不超过 4000 字。', 'EVIDENCE_REQUIRED')
       if (state.tasks.some(task => ['T-PUR', 'T-SALES'].includes(task.id)) || closingFacts(state).executionApproved) fail('执行跟进已获批准，不能再改选方案。', 'PLAN_LOCKED', 409)
       if (action.supplierId === 'A' && qa && qa.status !== 'completed') fail('质量核验任务仍在办理或等待送达，请先完成原任务后再改选 A。', 'QUALITY_IN_PROGRESS', 409)
       if (state.matter.planSelection?.supplierId === action.supplierId) fail('当前已选择该方案。', 'NO_CHANGE', 409)
-      return { title: `选择供应商 ${action.supplierId} 方案`, details: [`选择理由：${action.evidence.trim()}`, '本次仅记录方案选择，不改变有效决定，也不代表负责人批准。', action.supplierId === 'A' ? '保留 A 的到料风险仍然存在，后续须由负责人确认采购、销售跟进。' : 'B 须先通过质量核验，再由负责人批准切换。'] }
+      return { title: `选择供应商 ${action.supplierId} 方案`, details: [`选择理由：${selectionReason(state, action)}`, '本次仅记录方案选择，不改变有效决定，也不代表负责人批准。', action.supplierId === 'A' ? '保留 A 的到料风险仍然存在，后续须由负责人确认采购、销售跟进。' : 'B 须先通过质量核验，再由负责人批准切换。'] }
     case 'approve_keep_a':
       roleIs('lead')
       if (closingFacts(state).executionApproved || state.tasks.some(task => ['T-PUR', 'T-SALES'].includes(task.id))) fail('执行跟进已获批准。', 'ALREADY_APPROVED', 409)
-      if (state.matter.planSelection?.supplierId !== 'A' || state.matter.supplierId !== 'A') fail('请先选择保留供应商 A 并填写理由。', 'PLAN_NOT_SELECTED', 409)
+      if (state.matter.planSelection?.supplierId !== 'A' || state.matter.supplierId !== 'A') fail('请先选择保留供应商 A。', 'PLAN_NOT_SELECTED', 409)
       if (qa && qa.status !== 'completed') fail('请先完成正在办理的质量任务。', 'QUALITY_IN_PROGRESS', 409)
       if (action.evidence !== undefined) hasEvidence()
       if (!(action.evidence ?? state.matter.planSelection.reason)?.trim()) fail('缺少保留 A 的理由。', 'EVIDENCE_REQUIRED')
-      return { title: '确认保留供应商 A 并跟进', details: [`理由：${(action.evidence ?? state.matter.planSelection.reason).trim()}`, `当前 ${analyze(state).riskCount} 单存在到料风险；确认跟进不代表风险消除。`, 'DEC-01 继续有效；创建 T-PUR、T-SALES，由采购和销售分别跟进并回执。', '不批准切换 B，不改变 B 的质量结论。'] }
+      return { title: '确认保留供应商 A 并跟进', details: [`理由：${(action.evidence ?? state.matter.planSelection.reason).trim()}`, `当前 ${analyze(state).riskCount} 单存在到料风险；确认跟进不代表风险消除。`, 'DEC-01 继续有效；创建待发送的 T-PUR、T-SALES，另行人工确认发送后由采购和销售分别跟进并回执。', '不批准切换 B，不改变 B 的质量结论。'] }
     case 'request_quality':
       roleIs('procurement', 'lead')
       if (state.matter.supplierId !== 'A' || closingFacts(state).executionApproved) fail('执行跟进已批准，无需再次创建质量核验。', 'ALREADY_APPROVED', 409)
       if (state.matter.planSelection?.supplierId === 'A') fail('当前选择保留 A，请先选择 B 后发起质量核验。', 'PLAN_MISMATCH', 409)
       if (qa && !(qa.status === 'completed' && supplierB.quality === 'rejected')) fail('质量任务已存在，请处理或重试原任务。', 'TASK_EXISTS', 409)
-      return { title: qa ? '重新发起质量核验' : '发起质量核验', details: ['事项 SUP-001，备选供应商 B；接收人：质量负责人。', '截止时间：切换批准前完成；到料方案为 D4。', qa ? '重开原任务 T-QA，保留上轮凭据。' : '确认后创建 T-QA，并尝试送达模拟收件箱。'] }
+      return { title: qa ? '重新发起方案质量核验' : '发起方案质量核验', details: ['事项 SUP-001，备选供应商 B；接收人：质量负责人。', '截止时间：切换批准前完成；到料方案为 D4。', qa ? '重开原任务 T-QA，保留上轮凭据。' : '确认后创建 T-QA，并尝试送达模拟收件箱。'] }
+    case 'send_tasks':
+      roleIs('lead')
+      if (!closingFacts(state).executionApproved) fail('方案尚未获负责人批准。', 'NOT_APPROVED', 409)
+      if (!state.tasks.some(task => ['T-PUR', 'T-SALES'].includes(task.id) && task.status === 'pending_delivery')) fail('没有待发送任务；发送失败请重试原任务。', 'NO_PENDING_TASKS', 409)
+      return { title: '确认并发送部门任务', details: ['仅向演示收件箱发送已批准的采购、销售任务。', '两方分别记录送达结果；失败可重试原任务，不重复创建。'] }
+    case 'accept_task': {
+      const task = taskFor(action.taskId); roleIs(task.assignee)
+      if (task.status !== 'delivered') fail('仅已送达任务可确认接收。', 'TASK_STATE_CONFLICT', 409)
+      return { title: '确认接收任务', details: [`${task.id}：${task.title}。`, '仅确认收到，不代表开始处理或完成。'] }
+    }
     case 'start_task': {
       const task = taskFor(action.taskId); roleIs(task.assignee)
-      if (task.status !== 'delivered') fail('仅已送达的任务可以开始处理。', 'TASK_STATE_CONFLICT', 409)
+      if (!['delivered', 'accepted'].includes(task.status)) fail('仅已送达或已接收的任务可以开始处理。', 'TASK_STATE_CONFLICT', 409)
       return { title: '开始处理任务', details: [`${task.id}：${task.title}。`, `处理人：${LABELS[role]}。`] }
     }
     case 'submit_quality':
@@ -166,13 +182,13 @@ function check(state, action, role) {
       if (qa?.status !== 'in_progress') fail('请先开始处理质量任务，再提交核验结果。', 'TASK_STATE_CONFLICT', 409)
       if (!['approved', 'rejected'].includes(action.result)) fail('质量结论须为通过或拒绝。')
       hasEvidence()
-      return { title: '提交质量核验', details: [`供应商 B 核验结论：${action.result === 'approved' ? '通过' : '不通过'}。`, `凭据：${action.evidence.trim()}`, '此次确认不批准切换供应商。'] }
+      return { title: '提交方案质量核验', details: [`供应商 B 方案核验结论：${action.result === 'approved' ? '通过' : '不通过'}。`, `凭据：${action.evidence.trim()}`, '此次确认不批准切换供应商。'] }
     case 'approve_switch':
       roleIs('lead')
       if (closingFacts(state).executionApproved || state.decisions.some(decision => decision.id === 'DEC-03')) fail('执行跟进已批准。', 'ALREADY_APPROVED', 409)
       if (state.matter.planSelection?.supplierId === 'A') fail('当前选择保留 A，不能批准切换 B。', 'PLAN_MISMATCH', 409)
       if (supplierB.quality !== 'approved' || qa?.status !== 'completed' || qa.qualityResult !== 'approved' || !qa.receipt?.evidence?.trim()) fail('供应商 B 尚未通过质量核验，或缺少质量凭据。', 'QUALITY_NOT_APPROVED', 409)
-      return { title: '批准切换供应商 B', details: ['依据：DEC-02 条件方案与 T-QA 通过回执。', '生成 DEC-03 为有效决定，DEC-01 保留为已替代历史。', '创建 T-PUR 交采购经办、T-SALES 交销售经办；仅模拟收件箱送达。', '不代表原料已到货或订单已交付。'] }
+      return { title: '批准切换供应商 B', details: ['依据：DEC-02 条件方案与 T-QA 通过回执。', '生成 DEC-03 为有效决定，DEC-01 保留为已替代历史。', '创建待发送的 T-PUR、T-SALES；另行确认发送到演示收件箱。', '不代表原料已到货或订单已交付。'] }
     case 'submit_receipt': {
       const task = taskFor(action.taskId); roleIs(task.assignee)
       if (!['T-PUR', 'T-SALES'].includes(task.id)) fail('此任务须使用质量核验操作。')
@@ -233,38 +249,46 @@ export function applyAction(state, action, role) {
     } else { delete task.deliveryError; task.deliveredAt = at }
     event(task.status, `${task.id} 第 ${task.attempts} 次送达：${task.status === 'delivered' ? '已送达模拟收件箱' : task.deliveryError}`)
   }
-  const createTask = (id, title, assignee) => {
+  const createTask = (id, title, assignee, send = true) => {
     const task = { id, title, assignee, status: 'pending_delivery', attempts: 0, createdAt: at }
     next.tasks.push(task)
-    deliver(task)
+    if (send) deliver(task)
     return task
   }
   switch (action.type) {
     case 'select_plan':
-      next.matter.planSelection = { supplierId: action.supplierId, selectedBy: role, selectedAt: at, revision: next.revision, reason: action.evidence.trim() }
+      next.matter.planSelection = { supplierId: action.supplierId, selectedBy: role, selectedAt: at, revision: next.revision, reason: selectionReason(state, action) }
       break
     case 'approve_keep_a':
       next.matter.followupApproval = { approvedBy: role, approvedAt: at, riskCount: analyze(state).riskCount, sourceId: 'DOC-KEEP-A', reason: (action.evidence ?? next.matter.planSelection.reason).trim() }
-      createTask('T-PUR', '跟进供应商 A 的到料安排及延期风险', 'procurement')
-      createTask('T-SALES', '同步供应商 A 方案的订单交期风险', 'sales')
+      createTask('T-PUR', '跟进供应商 A 的到料安排及延期风险', 'procurement', false)
+      createTask('T-SALES', '同步供应商 A 方案的订单交期风险', 'sales', false)
       break
     case 'request_quality': {
       if (!next.matter.planSelection) next.matter.planSelection = { supplierId: 'B', selectedBy: role, selectedAt: at, revision: next.revision, reason: '通过发起供应商 B 质量核验确认选择 B 备选方案，待核验及负责人批准。' }
       const task = next.tasks.find(item => item.id === 'T-QA')
       if (task) {
-        task.history = [...(task.history ?? []), { receipt: task.receipt, qualityResult: task.qualityResult, attempts: task.attempts, completedAt: task.completedAt, startedAt: task.startedAt, deliveredAt: task.deliveredAt, reopenedAt: task.reopenedAt }]
+        task.history = [...(task.history ?? []), { receipt: task.receipt, qualityResult: task.qualityResult, attempts: task.attempts, completedAt: task.completedAt, acceptedAt: task.acceptedAt, startedAt: task.startedAt, deliveredAt: task.deliveredAt, reopenedAt: task.reopenedAt }]
         delete task.receipt; delete task.qualityResult; delete task.completedAt
-        delete task.startedAt; delete task.deliveredAt; delete task.deliveryError
+        delete task.acceptedAt; delete task.startedAt; delete task.deliveredAt; delete task.deliveryError
         task.attempts = 0
         task.reopenedAt = at
         next.suppliers.find(supplier => supplier.id === 'B').quality = 'pending'
         deliver(task)
-      } else createTask('T-QA', '核验供应商 B 的质量资格', 'quality')
+      } else createTask('T-QA', '核验供应商 B 方案质量', 'quality')
+      break
+    }
+    case 'send_tasks':
+      for (const task of next.tasks.filter(item => ['T-PUR', 'T-SALES'].includes(item.id) && item.status === 'pending_delivery')) deliver(task)
+      break
+    case 'accept_task': {
+      const task = next.tasks.find(item => item.id === action.taskId)
+      task.status = 'accepted'; task.acceptedAt = at
       break
     }
     case 'start_task': {
       const task = next.tasks.find(item => item.id === action.taskId)
-      task.status = 'in_progress'; task.startedAt = at
+      task.status = 'in_progress'; task.acceptedAt ??= at; task.startedAt = at
       break
     }
     case 'submit_quality': {
@@ -279,8 +303,8 @@ export function applyAction(state, action, role) {
       next.decisions.find(decision => decision.id === 'DEC-01').status = 'superseded'
       next.decisions.find(decision => decision.id === 'DEC-02').status = 'fulfilled'
       next.decisions.push({ id: 'DEC-03', status: 'effective', supplierId: 'B', sequence: 3, sourceId: 'DOC-DECISION-03', basedOn: ['DEC-02', 'T-QA'], approvedBy: role, createdAt: at, text: '依据 DEC-02 条件方案及 T-QA 通过凭据，由业务负责人确认切换供应商 B；采购和销售分别跟进并回执。' })
-      createTask('T-PUR', '确认供应商 B 的采购安排', 'procurement')
-      createTask('T-SALES', '同步关联订单交期信息', 'sales')
+      createTask('T-PUR', '确认供应商 B 的采购安排', 'procurement', false)
+      createTask('T-SALES', '同步关联订单交期信息', 'sales', false)
       break
     case 'submit_receipt': {
       const task = next.tasks.find(item => item.id === action.taskId)

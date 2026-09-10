@@ -22,6 +22,8 @@ test('A 全链：选择不批准，负责人确认、独立回执和最终复核
   assert.equal(previewAction(state, { type: 'approve_keep_a' }, 'lead').allowed, true)
   assert.equal(state.matter.followupApproval, undefined)
   state = act(state, 'approve_keep_a')
+  assert.ok(state.tasks.filter(task => task.id !== 'T-QA').every(task => task.status === 'pending_delivery'))
+  state = act(state, 'send_tasks')
   assert.equal(analyze(state).executionSupplierId, 'A')
   assert.equal(state.matter.followupApproval.riskCount, 1)
   assert.equal(state.matter.followupApproval.reason, state.matter.planSelection.reason)
@@ -66,6 +68,8 @@ test('B 显式选择和旧调用隐式选择均保留质量、批准及关闭条
     assert.equal(state.matter.supplierId, 'A')
     assert.throws(() => act(state, 'approve_switch'), { code: 'QUALITY_NOT_APPROVED' })
     state = act(qaDone(state, 'approved'), 'approve_switch')
+    assert.ok(state.tasks.filter(task => task.id !== 'T-QA').every(task => task.status === 'pending_delivery'))
+    state = act(state, 'send_tasks')
     assert.equal(analyze(state).executionSupplierId, 'B')
     state = receipt(receipt(state, 'T-PUR', 'procurement'), 'T-SALES', 'sales')
     state = act(state, 'close_matter')
@@ -75,10 +79,10 @@ test('B 显式选择和旧调用隐式选择均保留质量、批准及关闭条
   }
 })
 
-test('未选择、未批准、空理由与越权不产生任务或确认', () => {
+test('未选择、未批准及越权不产生任务；选择理由可空', () => {
   const initial = createState()
   assert.throws(() => act(initial, 'approve_keep_a'), { code: 'PLAN_NOT_SELECTED' })
-  assert.throws(() => act(initial, 'select_plan', 'procurement', { supplierId: 'A', evidence: ' ' }), { code: 'EVIDENCE_REQUIRED' })
+  assert.match(act(initial, 'select_plan', 'procurement', { supplierId: 'A', evidence: ' ' }).matter.planSelection.reason, /预计 D6/)
   assert.throws(() => select(initial, 'C'), { code: 'PLAN_INVALID' })
   assert.throws(() => select(initial, 'A', 'sales'), { code: 'FORBIDDEN' })
   const selected = select(initial, 'A')
@@ -99,6 +103,8 @@ test('执行前可改选；未完成的 QA 阻止改选 A，拒绝后允许且�
   state = act(state, 'submit_quality', 'quality', { taskId: 'T-QA', result: 'rejected', evidence: '本轮 B 核验不通过的真实记录' })
   const priorQa = structuredClone(state.tasks[0])
   state = act(select(state, 'A'), 'approve_keep_a')
+  assert.ok(state.tasks.filter(task => task.id !== 'T-QA').every(task => task.status === 'pending_delivery'))
+  state = act(state, 'send_tasks')
   assert.deepEqual(state.tasks.find(task => task.id === 'T-QA'), priorQa)
   assert.equal(state.suppliers.find(supplier => supplier.id === 'B').quality, 'rejected')
   state = act(receipt(receipt(state, 'T-PUR', 'procurement'), 'T-SALES', 'sales'), 'close_matter')
@@ -110,6 +116,8 @@ test('执行前可改选；未完成的 QA 阻止改选 A，拒绝后允许且�
 
 test('A 批准后锁定方案并阻止重复任务；发送失败必须重试，回执岗位隔离', () => {
   let state = act(select(act(createState(), 'arm_delivery_failure'), 'A'), 'approve_keep_a')
+  assert.ok(state.tasks.filter(task => task.id !== 'T-QA').every(task => task.status === 'pending_delivery'))
+  state = act(state, 'send_tasks')
   assert.equal(state.tasks[0].status, 'delivery_failed')
   assert.throws(() => select(state, 'B'), { code: 'PLAN_LOCKED' })
   assert.throws(() => act(state, 'approve_keep_a'), { code: 'ALREADY_APPROVED' })
@@ -134,12 +142,12 @@ test('A 批准后锁定方案并阻止重复任务；发送失败必须重试，
 test('A 规则答复反映选择和跟进，不要求 B 核验或假称风险消除', async () => {
   const selected = select(createState(), 'A')
   const pending = await runOfficeChat({ state: selected, question: '下一步是什么', role: 'lead', mode: 'rules' })
-  assert.match(pending.answer, /保留 A 尚待负责人确认/)
+  assert.match(pending.answer, /尚未批准跟进/)
   assert.doesNotMatch(pending.answer, /B 质量核验待完成/)
   const approved = await runOfficeChat({ state: act(selected, 'approve_keep_a'), question: '下一步是什么', role: 'lead', mode: 'rules' })
-  assert.match(approved.answer, /待补齐 T-PUR、T-SALES/)
-  assert.match(approved.answer, /1 条存在到料风险/)
-  assert.ok(approved.sources.some(source => source.id === 'DOC-KEEP-A'))
+  assert.match(approved.answer, /确认并发送采购、销售任务/)
+  assert.match(approved.answer, /1 条到料风险/)
+  assert.ok(approved.sources.some(source => source.id === 'DOC-STATE'))
 })
 
 test('模型新动作只准备选择，工具暴露参数契约，不能执行或更换操作者', async t => {
