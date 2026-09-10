@@ -41,7 +41,9 @@ export function createOfficeProxy({ env = process.env, fetchImpl = fetch } = {})
         if (Buffer.byteLength(body) > 262144) return json(res, 413, 'BODY_TOO_LARGE', '请求内容过大。')
       }
       const headers = { 'Content-Type': 'application/json', Origin: backend.origin }
-      for (const name of ['cookie', 'x-demo-role']) if (req.headers[name]) headers[name] = req.headers[name]
+      const session = /(?:^|;\s*)(office_session=[a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1]
+      if (session) headers.cookie = session
+      if (req.headers['x-demo-role']) headers['x-demo-role'] = req.headers['x-demo-role']
       // Vercel supplies this header; do not forward a client-provided x-real-ip.
       if (env.VERCEL && req.headers['x-vercel-forwarded-for']) headers['x-real-ip'] = String(req.headers['x-vercel-forwarded-for']).split(',')[0].trim()
       const upstream = await fetchImpl(new URL(incoming.pathname + incoming.search, backend), {
