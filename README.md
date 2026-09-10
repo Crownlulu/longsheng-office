@@ -1,78 +1,64 @@
 # 龙盛办公协同 Demo
 
-[在线演示](https://preview.aihuashen.com/longsheng-office/office)
+2026-09-10 改版：办公协同总览、渐进式业务助手、事项列表与详情。沿用 React / TypeScript / Vite / Shadcn UI、Node.js 24 和 SQLite。保留原爱化身品牌与高级关系视图。
 
-当前演示按用户最新要求恢复原侧边栏、爱化身 Logo、页面布局与业务表达，仅参考截图的视觉风格；演示收尾功能继续保留。修改说明见 [DEMO-FINISH.md](docs/DEMO-FINISH.md)。
+## 先看本轮状态
 
-从供应商延期提醒出发，查询订单影响、追溯会议决定、比较供应方案，经质量核验和负责人确认，创建采购及销售任务，最后收集回执并关闭事项。
+本轮说明见 [实施记录](docs/revision-20260910/IMPLEMENTATION.md)、[验证与交付](docs/revision-20260910/DELIVERY.md)，原始修改要求见 [产品方案](docs/revision-20260910/PRODUCT-REQUEST.md)。旧版发布/验收说明保存在 docs，其结论不代表本轮已经发布。
 
-仓库包含 React 前端、Node.js 后端、SQLite 持久化与测试。页面沿用 Shadcn Admin，使用爱化身 Logo。
-
-当前版本把八步办理完整放在业务助手中，事项详情用于回顾依据、选择、执行和复核记录。助手切页返回保留问答与草稿。A/B 均有完整闭环，A 关闭后仍保留到料风险。最新范围见 [助手完整办理与事项回顾](docs/ASSISTANT-WORKFLOW.md)，此前版本见 [历史修改说明](docs/REVISION-CANONICAL.md)。
+原始代码：标签 `office-demo-baseline-20260910`（`ceb7aa5bff249b9e01af3d07c2bb740431f9023f`）。修改代码：分支 `codex/office-demo-20260910-revision`。无需将两套 src 放进同一构建目录。
 
 ## 本地运行
 
-使用 Node.js 24 与 npm：
+需要 Node.js 24 与 npm。在 Git Bash / macOS / Linux 项目目录运行：
 
 ```bash
 npm ci
 npm run build
-npm run office
+OFFICE_MODEL_MODE=rules npm run office
 ```
 
-打开 http://127.0.0.1:5194/office 。页面包含办公协同首页、业务助手、事项详情和演示设置。
+Windows 用户也可双击项目中的 `start-demo.cmd`。它明确使用规则演示，并将演示数据保存在独立数据库 `.office-data/revision-demo.sqlite`。
 
-默认使用合成样例。真实模型需要自行配置：在演示设置中切换到业务负责人，填写兼容 OpenAI 的接口地址、模型名称和密钥，测试连接后使用。也可以复制 `.env.example` 为 `.env`，填入配置后启动：
+打开 http://127.0.0.1:5194/office 。该地址指运行代码的电脑，不是公开分享地址。
 
-```bash
-node --env-file=.env server/office-server.mjs
-```
+`OFFICE_MODEL_MODE` 仅决定新演示空间的默认模式，已有空间保持原配置。真实模型使用 `.env.example` 所列环境变量配置后，以 `node --env-file=.env server/office-server.mjs` 启动；默认 live，失败明确报错，不自动切换规则。原内部 `/api/office/model` 配置 API 保留，客户界面无设置页、模型地址和密钥输入。
 
-密钥与线上访问码不在仓库中。规则模式须手动选择，真实模型调用失败不会自动替换成固定答案。源代码保留原工作区的可选兼容行为：若相邻目录存在 `platform-demo/.env`，启动时会加载它；独立克隆无需该目录。
+## 演示顺序
 
-## 演示流程
+1. 首页“继续处理”只预填问题；发送后出现对应回答和来源。
+2. 点击“比较供应方案”或查询后的“继续比较并选择方案”。选择 A/B，系统带出依据，补充理由可空；弹窗取消不会保存选择。
+3. A：负责人确认保留到料风险及跟进。B：发起方案质量核验，切质量岗位，确认接收、开始处理、提交结论与凭据，再切业务负责人批准切换。
+4. 批准后两条部门任务先待发送。负责人点击“确认并发送任务”，核对后确认发送。
+5. 分别切换采购、销售岗位，确认接收、开始处理、提交回执；顺序不限。失败只重试原任务。
+6. 两份回执齐全后，业务负责人最终复核关闭，回到首页查看已办结。
+7. 导航“事项详情”先进入列表，可按关键词/状态筛选；从助手进入直接显示当前事项。详情底部返回同一助手上下文。
 
-1. 首页“继续处理”进入助手，预填问题，由用户发送。助手展示延期通知、订单影响和会议依据。
-2. 在助手内比较 A/B，填写理由并明确选择。选择不会自动批准或切换供应商。
-3. 选择 B：发起质量核验，质量负责人开始处理并提交结论和凭据，通过后业务负责人批准切换。选择 A：业务负责人确认保留到料风险及两部门跟进安排。
-4. 采购、销售在助手内分别开始处理并提交回执，顺序不限，无需每一步重新问模型。
-5. 负责人核对两份实际回执和遗留风险，明确确认后关闭事项。八步进度支持跳转定位；事项详情回顾全过程，返回助手保留分析和草稿。
+“都不满意”收集反馈并复用当前模型通道重新分析，不改变业务状态。规则模式仅梳理已知 A/B 方案，不能凭空生成第三供应商、价格或日期。历史回答与来源保持查询当时版本；新回答还保存结构化事实快照。
 
-查询中切页、切岗位后，结果仍保存到原岗位会话；其他岗位不会显示这份问答。刷新恢复当前岗位、模式的历史回答；旧回答的模型建议保持不可直接执行。来源、任务回执和历史记录可以查阅，完整关系图默认折叠。
-
-接收岗位点击“开始处理”即发起 `start_task`，不再要求额外确认一次开始动作。核验任务发起、专业结果、批准、回执和关闭仍经预览与人工确认，并校验角色、数据版本和重复提交。业务关系图与助手读取同一份状态；SQLite 保存决定、任务、回执和模型记录，浏览器 Cookie 对应独立演示空间。
-
-## 验证
+## 检查
 
 ```bash
 npm run test:office
 npm run build
 ```
 
-本次八步办理变更：42 项后端测试、前端构建和定向 ESLint 通过。`node scripts/verify-office-workflow.mjs` 使用独立数据库验证 A/B 全链、切页和岗位隔离、查询中返回、取消、旧版本、重复提交、失败重试及 1440/1280/390px。旧 `verify-office-handoff.mjs` 入口转到同一验收脚本。
-
-可用 `OFFICE_VERIFY_OUT` 指定报告目录；设置 `OFFICE_VERIFY_ENV` 为已有私有模型配置文件路径时，首个问题使用真实模型，其后明确切换规则模式做确定性回归。不得把这项结果描述为全流程真实模型评测。本批八步办理与后续演示收尾已随 `20260910-office-v4` 发布到公网；旧镜像、备份与原有空间保留。
-
-同题对比使用相同问题、模型、数据版本与请求预算，分别开放材料检索或材料检索加业务对象工具，不预设对比结果。本地两条对比分支均完成；公网调用结果与失败记录见本次修改说明。
+本轮新增发送/接收及历史快照回归见 `tests/office-revision.test.mjs`。原 `scripts/verify-office-workflow.mjs` 针对旧八步页面编写，不能用于证明本轮新界面已通过浏览器验收；本轮实际检查与未测项见 DELIVERY.md。
 
 ## 部署
 
-生产服务应放在 HTTPS 反向代理之后，并配置 `OFFICE_PUBLIC_ORIGIN` 和 `OFFICE_ACCESS_CODE`。如使用子路径，构建时的 Vite base 与 `OFFICE_BASE_PATH` 必须一致，例如：
+本项目需同时运行 Node 后端和 SQLite，不能只把 dist 上传至静态托管。现有 Docker 与反向代理方式保留：
 
 ```bash
 npx tsc -b
 npx vite build --base=/longsheng-office/
-docker build -f deploy/Dockerfile -t longsheng-office .
+docker build -f deploy/Dockerfile -t longsheng-office:20260910-revision .
 ```
 
-镜像在容器内监听 5214，使用 UID 1000 写入 `/data`。运行时用私有 env 文件传入配置、挂载可写的持久化目录到 `/data`，仅向反向代理开放服务。代理须移除 `/longsheng-office/` 前缀后转发，并保留原始 Host 和 HTTPS 来源信息。
+生产运行需 `OFFICE_PUBLIC_ORIGIN`、私有 `OFFICE_ACCESS_CODE`、`OFFICE_BASE_PATH=/longsheng-office/`，代理去掉路径前缀，Vite base 与后端配置一致。SQLite 和 `config.key` 必须一起备份。实际服务器发布需该服务器的现有发布权限；推送 GitHub 不等于线上 Demo 更新。
 
-默认数据目录为 `.office-data`，容器为 `/data`。数据库和 `config.key` 必须一起保存，后者用于解密用户配置的模型密钥。不要用删除数据库代替页面重置。
+## 边界与署名
 
-## 范围
+当前只有供应商交期变更这一已确认场景。两订单、两供应商和会议记录为合成样例。前端岗位切换、收件箱投递和回执均为演示；未接入企业身份、OA、ERP 或外部消息。方案质量核验沿用现有人工核验及凭据条件，未新增评分标准。办公事项关闭不代表实物到货、生产完成或订单交付。
 
-两条订单、两家供应商和两份会议记录均为合成样例。角色切换、任务投递与回执是演示流程，未接入真实 DataOS、OA、ERP、企业身份或外部消息。事项关闭表示办公协同完成，不表示原料已到货或订单已交付。
-
-## 来源
-
-界面基于 [satnaing/shadcn-admin](https://github.com/satnaing/shadcn-admin)，保留原 MIT 许可证与署名。上游基线提交为 `e16c87f213a5ba5e45964e9b67c792105ec74d26`。关系画布与执行记录复用已有项目组件并适配本场景。爱化身名称与 Logo 用于演示标识；本仓库的发布不授予商标权利。依赖项各自的许可证继续适用。
+界面基于 [satnaing/shadcn-admin](https://github.com/satnaing/shadcn-admin)，保留 MIT 许可证与署名。上游基线为 `e16c87f213a5ba5e45964e9b67c792105ec74d26`。爱化身名称与 Logo 用于演示标识；本仓库不授予商标权利。依赖项各自许可证继续适用。

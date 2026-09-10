@@ -68,11 +68,13 @@ const pages = [
     icon: ListTodo,
     description: '供应商交期变更 · 来源、方案与处理记录。',
   },
-
 ] as const
 function readPage(): Page {
   const value = window.location.hash.slice(1).split('?')[0]
-  if (value === 'matter-detail') return 'matter-detail'
+  if (value === 'matter-detail') {
+    const id = new URLSearchParams(window.location.hash.split('?')[1]).get('id')
+    return !id || id === 'SUP-001' ? 'matter-detail' : 'matter'
+  }
   return pages.some((page) => page.id === value) ? (value as Page) : 'home'
 }
 
@@ -80,7 +82,7 @@ export function OfficeApp() {
   const [page, setPage] = useState<Page>(readPage)
   const [role, setRole] = useState<Role>(() => {
     const saved = sessionStorage.getItem('office-role')
-    return saved && saved in roleNames ? saved as Role : 'lead'
+    return saved && saved in roleNames ? (saved as Role) : 'lead'
   })
   const roleRef = useRef(role)
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
@@ -225,7 +227,13 @@ export function OfficeApp() {
     return () => window.removeEventListener('hashchange', changed)
   }, [])
   function navigate(next: Page) {
-    window.location.assign('#' + next + (next === 'matter-detail' && snapshot ? '?id=' + encodeURIComponent(snapshot.state.matter.id) : ''))
+    window.location.assign(
+      '#' +
+        next +
+        (next === 'matter-detail' && snapshot
+          ? '?id=' + encodeURIComponent(snapshot.state.matter.id)
+          : '')
+    )
     setPage(next)
   }
   function ask(value: string) {
@@ -318,10 +326,12 @@ export function OfficeApp() {
         expectedVersion: preview.revision,
         idempotencyKey: confirmKey.current,
       })
+      const closedNow = preview.action.type === 'close_matter'
       setSnapshot(next)
       setPreview(null)
       setReceiptTask(null)
       receiptDraft.current = null
+      if (closedNow) navigate('home')
       setNotice(`已保存。${next.analysis.nextStep}`)
       await refresh()
     } catch (failure) {
@@ -365,7 +375,9 @@ export function OfficeApp() {
     setReceiptTask(null)
     void propose(action, receiptVersion.current)
   }
-  const currentPage = pages.find((item) => item.id === (page === 'matter-detail' ? 'matter' : page))!
+  const currentPage = pages.find(
+    (item) => item.id === (page === 'matter-detail' ? 'matter' : page)
+  )!
   const businessProps = {
     role,
     busy: actionBusy || loading,
@@ -537,10 +549,17 @@ export function OfficeApp() {
         {snapshot && (
           <div className={loading ? 'pointer-events-none opacity-60' : ''}>
             {page === 'home' && <Home snapshot={snapshot} {...businessProps} />}
-            {page === 'matter' && <MatterList snapshot={snapshot} viewMatter={businessProps.viewMatter} />}
+            {page === 'matter' && (
+              <MatterList
+                snapshot={snapshot}
+                viewMatter={businessProps.viewMatter}
+              />
+            )}
             {page === 'matter-detail' && (
               <div className='space-y-4'>
-                <Button variant='ghost' onClick={() => navigate('matter')}>返回事项列表</Button>
+                <Button variant='ghost' onClick={() => navigate('matter')}>
+                  返回事项列表
+                </Button>
                 <Matter snapshot={snapshot} {...businessProps} />
               </div>
             )}
@@ -564,7 +583,6 @@ export function OfficeApp() {
                 actionBusy={actionBusy || loading}
               />
             )}
-
           </div>
         )}
       </Main>
@@ -616,7 +634,7 @@ export function OfficeApp() {
           <SheetHeader>
             <SheetTitle>
               {receiptTask?.id === 'T-QA'
-                ? '供应商 B 质量资格核验'
+                ? '供应商 B 方案质量核验'
                 : '提交部门处理回执'}
             </SheetTitle>
             <SheetDescription>

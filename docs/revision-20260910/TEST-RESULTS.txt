@@ -1,0 +1,59 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> shadcn-admin@2.2.1 test:office
+> node --test tests/office-*.test.mjs
+
+✔ HTTP full chain, confirmation, retries, role/version guards, isolation and restart durability (316.441572ms)
+✔ quality, procurement and sales must each start before submitting; delivered work is not completed (8.765402ms)
+✔ initial facts require no model gate; pending actions and closure are computed from independent receipts (5.280815ms)
+✔ QA reopen archives prior timestamps and evidence; a failed new delivery has no stale current-round timestamps (1.613199ms)
+✔ V2 closed SQLite spaces and model history survive migration; cached confirmations rebuild consistent projections (76.54745ms)
+✔ 初始数据与来源唯一、会议先后不覆盖有效决定 (2.093707ms)
+✔ 完整链路：预览不执行、质量通过、负责人批准、两份回执后关闭 (9.819952ms)
+✔ 角色权限与资格条件由执行层校验 (1.35639ms)
+✔ 质量拒绝后不得切换，可重开同任务且历史证据保留 (1.075817ms)
+✔ D9 与 D6 数据联动；切换后风险采用 B，比较仍分别计算 A/B (2.48941ms)
+✔ 发送失败消耗一次故障，可重试原任务且不重复创建 (0.885245ms)
+✔ 送达重试上限三次；同次批准仅第一个新任务受一次故障影响 (1.619327ms)
+✔ 缺少回执或证据时不能关闭，重复审批不得新增决定或任务 (1.376048ms)
+✔ 冻结输入仍可预览和执行，原始会议保留，重置版本递增 (1.028987ms)
+✔ real HTTP tool protocol preserves IDs, derives sources from returned documents, and leaves state untouched (63.572232ms)
+✔ baseline can retrieve all original data and has equal preview action affordance (36.570985ms)
+✔ permitted action is a preview only; caller role cannot be replaced by tool input (6.995794ms)
+✔ ontology tools read the same graph objects and return only actual sources and timestamps (10.339163ms)
+✔ denied quality/role prerequisites never yield an executable proposal (7.462963ms)
+✔ four model requests is a hard limit and partial proposals are discarded (9.202887ms)
+✔ unknown tools and malformed arguments return tool errors with matching IDs (7.642027ms)
+✔ upstream HTTP errors are safe, explicit failures and never silently switch to rules (4.080015ms)
+✔ missing key fails without network; rules mode must be explicit (0.824916ms)
+✔ timeout cancels the actual HTTP request and yields retryable failure (103.312119ms)
+✔ fabricated citations are rejected rather than recorded as genuine sources (5.095682ms)
+✔ ordinary bracketed status, entity IDs and Markdown labels are not fabricated citations (5.445088ms)
+✔ valid document ID that was not actually read remains rejected (5.434832ms)
+✔ DeepSeek v4 uses disabled thinking; connectivity reports actual reply and redacts echoed key (2.224359ms)
+✔ business answers translate known technical tokens, omit tool references, and preserve real source IDs (3.900381ms)
+✔ initial projection retains type identities, original sources and conditional meeting effect (4.140825ms)
+✔ D9 changes order risks, supplier options and sources in one version without modifying input (3.857697ms)
+✔ approved switch projects actual decision replacement, responsibility and QA receipt (3.278343ms)
+✔ closure updates task and receipt state without claiming arrival or delivery (5.753892ms)
+✔ retry and repeated quality review keep one task and preserve historical evidence (3.702288ms)
+✔ read tools return versioned, bounded and immutable graph data with valid endpoints (4.794578ms)
+✔ A 全链：选择不批准，负责人确认、独立回执和最终复核均可追溯，关闭仍保留风险 (12.185605ms)
+✔ B 显式选择和旧调用隐式选择均保留质量、批准及关闭条件 (6.655021ms)
+✔ 未选择、未批准及越权不产生任务；选择理由可空 (1.019473ms)
+✔ 执行前可改选；未完成的 QA 阻止改选 A，拒绝后允许且保留原核验凭据 (4.336022ms)
+✔ A 批准后锁定方案并阻止重复任务；发送失败必须重试，回执岗位隔离 (2.870913ms)
+✔ A 规则答复反映选择和跟进，不要求 B 核验或假称风险消除 (2.495489ms)
+✔ 模型新动作只准备选择，工具暴露参数契约，不能执行或更换操作者 (44.820557ms)
+✔ public deployment requires access, scopes secure cookies and preserves origin guard (40.477554ms)
+✔ September 10: optional selection evidence derives from current facts without approval (4.406936ms)
+✔ September 10: approval, dispatch, delivery failure, acceptance and work remain distinct (7.715545ms)
+✔ September 10: feedback and historical answer facts are read-only and versioned (1.970104ms)
+ℹ tests 46
+ℹ suites 0
+ℹ pass 46
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 418.454642

@@ -14,11 +14,13 @@ import { roleNames, type Preview, type Snapshot, type Source } from './types'
 import { ReviewSummary } from './workflow-overview'
 
 const titles: Record<string, [string, string]> = {
+  send_tasks: ['发送采购、销售任务', '确认发送'],
+  accept_task: ['确认接收任务', '确认接收'],
   select_plan: ['确认处理方案意向', '确认选择'],
   approve_keep_a: ['确认沿用供应商 A', '确认批准'],
-  request_quality: ['发起质量核验', '确认发起'],
+  request_quality: ['发起方案质量核验', '确认发起'],
   approve_switch: ['批准切换', '确认批准'],
-  submit_quality: ['确认质量核验结果', '确认提交'],
+  submit_quality: ['确认方案质量核验结果', '确认提交'],
   submit_receipt: ['确认部门处理回执', '确认提交'],
   start_task: ['开始处理任务', '确认开始'],
   close_matter: ['复核并关闭事项', '确认关闭'],
@@ -80,10 +82,10 @@ export function ActionSheet({
                 <dt className='text-muted-foreground'>接收岗位</dt>
                 <dd>质量负责人</dd>
                 <dt className='text-muted-foreground'>核验对象</dt>
-                <dd>供应商 B · 原料 M-01</dd>
+                <dd>供应商 B 到料方案 · 原料 M-01</dd>
                 <dt className='text-muted-foreground'>发起依据</dt>
                 <dd className='leading-6'>
-                  核对延期影响后，按 DEC-02 的切换条件发起质量资格核验。
+                  核对延期影响后，按 DEC-02 的切换条件发起方案质量核验。
                 </dd>
                 <dt className='text-muted-foreground'>完成要求</dt>
                 <dd>提交通过或不通过结论，并附核验依据。</dd>
@@ -115,7 +117,7 @@ export function ActionSheet({
                 <p className='mb-2 font-medium'>核对批准条件</p>
                 <ul className='list-disc space-y-2 ps-5'>
                   <li>
-                    质量核验：
+                    方案质量核验：
                     {candidate?.quality === 'approved' ? '已通过' : '尚未通过'}
                   </li>
                   {snapshot?.state.orders.map((order) => (
@@ -134,7 +136,7 @@ export function ActionSheet({
               </div>
               <p className='rounded-md bg-muted/40 p-4 leading-7'>
                 批准后 DEC-03 替代 DEC-01。采购经办跟进 B
-                的供应安排，销售经办同步相关订单的交期信息。
+                的供应安排，销售经办同步相关订单的交期信息。两条任务先处于待发送状态，需另行确认发送。
               </p>
             </>
           )}

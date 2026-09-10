@@ -89,7 +89,7 @@ export function WorkflowProgress({ snapshot }: { snapshot: Snapshot }) {
         ? `${flow.legacyB ? '已有' : '已选'} ${flow.planned} 路径`
         : '待选择',
     ],
-    ['quality', '质量核验', flow.qualityLabel],
+    ['quality', '方案质量核验', flow.qualityLabel],
     ['approval', '负责人确认', flow.approved ? '已确认' : '待确认'],
     [
       'tasks',
@@ -246,7 +246,7 @@ export function ReviewSummary({
           </div>
           <div className='space-y-2'>
             <p className='font-medium'>
-              {flow.planned === 'A' ? '沿用资格' : '质量核验'}
+              {flow.planned === 'A' ? '沿用资格' : '方案质量核验'}
             </p>
             <Badge
               variant={

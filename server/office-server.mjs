@@ -23,7 +23,8 @@ function validateBase(value) {
   return url.toString().replace(/\/$/, '')
 }
 
-export function createOfficeServer({ dbPath = resolve(root, '.office-data/office.sqlite'), provider = {}, distPath = resolve(root, 'dist'), publicOrigin = '', basePath = '/', accessCode = '' } = {}) {
+export function createOfficeServer({ dbPath = resolve(root, '.office-data/office.sqlite'), provider = {}, distPath = resolve(root, 'dist'), publicOrigin = '', basePath = '/', accessCode = '', defaultMode = 'live' } = {}) {
+  if (!['live', 'rules'].includes(defaultMode)) throw new Error('Invalid default model mode.')
   const origin = publicOrigin ? new URL(publicOrigin) : null
   if (origin && (origin.protocol !== 'https:' || !accessCode)) throw new Error('Public deployment requires HTTPS and an access code.')
   if (!/^\/(?:[a-zA-Z0-9_-]+\/)*$/.test(basePath)) throw new Error('Invalid deployment base path.')
@@ -108,7 +109,7 @@ export function createOfficeServer({ dbPath = resolve(root, '.office-data/office
       } else if (!row && accessCode) fail(401, 'ACCESS_REQUIRED', '请输入演示访问码。')
       if (!row) {
         const nextToken = randomBytes(32).toString('hex'); const id = randomUUID()
-        db.prepare('INSERT INTO spaces VALUES(?,?,?,?)').run(id, hash(nextToken), JSON.stringify(createState()), JSON.stringify({ baseUrl: defaults.baseUrl, model: defaults.model, mode: 'live' }))
+        db.prepare('INSERT INTO spaces VALUES(?,?,?,?)').run(id, hash(nextToken), JSON.stringify(createState()), JSON.stringify({ baseUrl: defaults.baseUrl, model: defaults.model, mode: defaultMode }))
         row = { id }; res.setHeader('Set-Cookie', `office_session=${nextToken}; HttpOnly; SameSite=Strict; Path=${basePath}; Max-Age=2592000${origin ? '; Secure' : ''}`)
       }
       const space = getSpace(row.id)
@@ -233,7 +234,7 @@ export function createOfficeServer({ dbPath = resolve(root, '.office-data/office
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const envPath = resolve(root, '../platform-demo/.env')
   if (existsSync(envPath)) process.loadEnvFile(envPath)
-  const server = createOfficeServer({ dbPath: process.env.OFFICE_DATA_PATH || resolve(root, '.office-data/office.sqlite'), publicOrigin: process.env.OFFICE_PUBLIC_ORIGIN || '', basePath: process.env.OFFICE_BASE_PATH || '/', accessCode: process.env.OFFICE_ACCESS_CODE || '', provider: { baseUrl: process.env.MODEL_BASE_URL, model: process.env.MODEL_NAME, apiKey: process.env.MODEL_API_KEY } })
+  const server = createOfficeServer({ defaultMode: process.env.OFFICE_MODEL_MODE || 'live', dbPath: process.env.OFFICE_DATA_PATH || resolve(root, '.office-data/office.sqlite'), publicOrigin: process.env.OFFICE_PUBLIC_ORIGIN || '', basePath: process.env.OFFICE_BASE_PATH || '/', accessCode: process.env.OFFICE_ACCESS_CODE || '', provider: { baseUrl: process.env.MODEL_BASE_URL, model: process.env.MODEL_NAME, apiKey: process.env.MODEL_API_KEY } })
   const port = Number(process.env.OFFICE_PORT || 5194)
   server.listen(port, process.env.OFFICE_BIND || '127.0.0.1', () => console.log(`办公协同服务已启动，端口 ${port}；模型凭据：${process.env.MODEL_API_KEY ? '已配置' : '未配置'}`))
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => server.close(() => process.exit(0)))
