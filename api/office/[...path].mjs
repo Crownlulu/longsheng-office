@@ -1,3 +1,3 @@
-import { createOfficeProxy } from '../../server/office-proxy.mjs'
+import { createOfficeCloudHandler } from '../../server/office-cloud.mjs'
 
-export default createOfficeProxy()
+export default createOfficeCloudHandler()

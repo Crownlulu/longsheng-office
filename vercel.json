@@ -4,8 +4,9 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "outputDirectory": "dist",
+  "regions": ["iad1"],
   "functions": {
-    "api/office/[...path].mjs": { "maxDuration": 150 }
+    "api/**/*.mjs": { "maxDuration": 150 }
   },
   "rewrites": [
     { "source": "/office", "destination": "/index.html" },

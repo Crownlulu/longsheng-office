@@ -1,0 +1,15 @@
+node_modules
+.git
+.vercel
+.runtime
+.office-data
+.env
+.env.*
+*.sqlite*
+*.db
+*.key
+*.pem
+*.private.json
+tests
+coverage
+deploy
